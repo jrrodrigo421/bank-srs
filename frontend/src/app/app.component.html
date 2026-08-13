@@ -1,0 +1,66 @@
+<div class="container">
+  <header>
+    <h1>Lista de Tarefas</h1>
+    <p>CRUD simples — Angular + Spring Boot</p>
+  </header>
+
+  <section class="card form-card">
+    <h2>{{ editandoId ? 'Editar tarefa' : 'Nova tarefa' }}</h2>
+
+    <div class="campo">
+      <label for="titulo">Título</label>
+      <input id="titulo" type="text" [(ngModel)]="tarefaForm.titulo" maxlength="200" placeholder="Ex: Estudar SOLID" />
+    </div>
+
+    <div class="campo">
+      <label for="descricao">Descrição</label>
+      <textarea id="descricao" [(ngModel)]="tarefaForm.descricao" maxlength="1000" rows="3"
+        placeholder="Detalhes opcionais"></textarea>
+    </div>
+
+    <div class="campo">
+      <label for="status">Status</label>
+      <select id="status" [(ngModel)]="tarefaForm.status">
+        <option *ngFor="let s of statusOptions" [value]="s">{{ labelStatus(s) }}</option>
+      </select>
+    </div>
+
+    <div class="acoes">
+      <button type="button" class="btn primary" (click)="salvar()">
+        {{ editandoId ? 'Atualizar' : 'Criar' }}
+      </button>
+      <button *ngIf="editandoId" type="button" class="btn secondary" (click)="limparForm()">Cancelar</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="lista-header">
+      <h2>Tarefas</h2>
+      <div class="filtro">
+        <label for="filtro">Filtrar:</label>
+        <select id="filtro" [(ngModel)]="filtroStatus" (change)="carregar()">
+          <option value="">Todas</option>
+          <option *ngFor="let s of statusOptions" [value]="s">{{ labelStatus(s) }}</option>
+        </select>
+      </div>
+    </div>
+
+    <p *ngIf="erro" class="erro">{{ erro }}</p>
+    <p *ngIf="carregando" class="info">Carregando...</p>
+    <p *ngIf="!carregando && tarefas.length === 0" class="info">Nenhuma tarefa encontrada.</p>
+
+    <ul class="lista" *ngIf="!carregando && tarefas.length > 0">
+      <li *ngFor="let t of tarefas" [class]="'item status-' + t.status.toLowerCase()">
+        <div class="item-info">
+          <strong>{{ t.titulo }}</strong>
+          <span class="badge">{{ labelStatus(t.status) }}</span>
+          <p *ngIf="t.descricao">{{ t.descricao }}</p>
+        </div>
+        <div class="item-acoes">
+          <button type="button" class="btn small" (click)="editar(t)">Editar</button>
+          <button type="button" class="btn small danger" (click)="excluir(t.id)">Excluir</button>
+        </div>
+      </li>
+    </ul>
+  </section>
+</div>

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.angular/
+target/
+*.iml
+.idea/
+.vscode/
+.DS_Store
+oracle-data/
