@@ -70,15 +70,6 @@ public class FilaServiceImpl implements FilaService {
     }
 
     private FilaMovimentoResponse paraResponse(FilaMovimento item) {
-        return new FilaMovimentoResponse(
-                item.getId(),
-                item.getContaId(),
-                item.getTipo(),
-                item.getValor(),
-                item.getStatus(),
-                item.getIdempotencyKey(),
-                item.getErro(),
-                item.getCriadoEm()
-        );
+        return FilaMovimentoResponse.from(item);
     }
 }

@@ -71,11 +71,10 @@ public class ContaServiceImpl implements ContaService {
     @Override
     public ContaResponse atualizar(Long id, ContaRequest request) {
         Conta conta = buscarEntidade(id);
-        if (!request.getAgencia().equals(conta.getAgencia())
-                || !request.getNumero().equals(conta.getNumero())) {
-            if (contaRepository.existsByAgenciaAndNumero(request.getAgencia(), request.getNumero())) {
-                throw new RegraNegocioException("Já existe conta nesta agência e número");
-            }
+        if ((!request.getAgencia().equals(conta.getAgencia())
+                || !request.getNumero().equals(conta.getNumero()))
+                && contaRepository.existsByAgenciaAndNumero(request.getAgencia(), request.getNumero())) {
+            throw new RegraNegocioException("Já existe conta nesta agência e número");
         }
         mapearCadastro(request, conta);
         return paraResponse(contaRepository.save(conta));
@@ -90,15 +89,20 @@ public class ContaServiceImpl implements ContaService {
         contaRepository.delete(conta);
     }
 
-    @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public ContaResponse depositar(Long id, MovimentoRequest request, String idempotencyKey) {
+    private ContaResponse movimentar(Long id, MovimentoRequest request, String idempotencyKey, boolean deposito) {
         ContaResponse cached = respostaIdempotente(idempotencyKey);
         if (cached != null) {
             return cached;
         }
         Conta conta = contaAtivaComLock(id);
-        conta.setSaldo(conta.getSaldo().add(request.getValor()));
+        if (deposito) {
+            conta.setSaldo(conta.getSaldo().add(request.getValor()));
+        } else {
+            if (conta.getSaldo().compareTo(request.getValor()) < 0) {
+                throw new RegraNegocioException("Saldo insuficiente");
+            }
+            conta.setSaldo(conta.getSaldo().subtract(request.getValor()));
+        }
         ContaResponse response = paraResponse(contaRepository.save(conta));
         gravarIdempotencia(idempotencyKey, response);
         return response;
@@ -106,19 +110,14 @@ public class ContaServiceImpl implements ContaService {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public ContaResponse depositar(Long id, MovimentoRequest request, String idempotencyKey) {
+        return movimentar(id, request, idempotencyKey, true);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ContaResponse sacar(Long id, MovimentoRequest request, String idempotencyKey) {
-        ContaResponse cached = respostaIdempotente(idempotencyKey);
-        if (cached != null) {
-            return cached;
-        }
-        Conta conta = contaAtivaComLock(id);
-        if (conta.getSaldo().compareTo(request.getValor()) < 0) {
-            throw new RegraNegocioException("Saldo insuficiente");
-        }
-        conta.setSaldo(conta.getSaldo().subtract(request.getValor()));
-        ContaResponse response = paraResponse(contaRepository.save(conta));
-        gravarIdempotencia(idempotencyKey, response);
-        return response;
+        return movimentar(id, request, idempotencyKey, false);
     }
 
     private Conta contaAtivaComLock(Long id) {
@@ -174,16 +173,6 @@ public class ContaServiceImpl implements ContaService {
     }
 
     private ContaResponse paraResponse(Conta conta) {
-        return new ContaResponse(
-                conta.getId(),
-                conta.getAgencia(),
-                conta.getNumero(),
-                conta.getTitular(),
-                conta.getCpf(),
-                conta.getTipo(),
-                conta.getStatus(),
-                conta.getSaldo(),
-                conta.getAbertaEm()
-        );
+        return ContaResponse.from(conta);
     }
 }

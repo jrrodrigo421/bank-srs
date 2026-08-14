@@ -28,15 +28,6 @@ public class FilaController {
         if (item == null) {
             return ResponseEntity.noContent().build();
         }
-        return ResponseEntity.ok(new FilaMovimentoResponse(
-                item.getId(),
-                item.getContaId(),
-                item.getTipo(),
-                item.getValor(),
-                item.getStatus(),
-                item.getIdempotencyKey(),
-                item.getErro(),
-                item.getCriadoEm()
-        ));
+        return ResponseEntity.ok(FilaMovimentoResponse.from(item));
     }
 }

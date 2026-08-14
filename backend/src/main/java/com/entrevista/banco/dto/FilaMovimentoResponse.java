@@ -1,5 +1,6 @@
 package com.entrevista.banco.dto;
 
+import com.entrevista.banco.domain.FilaMovimento;
 import com.entrevista.banco.domain.StatusFila;
 import com.entrevista.banco.domain.TipoMovimento;
 
@@ -20,16 +21,17 @@ public class FilaMovimentoResponse {
     public FilaMovimentoResponse() {
     }
 
-    public FilaMovimentoResponse(Long id, Long contaId, TipoMovimento tipo, BigDecimal valor,
-                                 StatusFila status, String idempotencyKey, String erro, LocalDateTime criadoEm) {
-        this.id = id;
-        this.contaId = contaId;
-        this.tipo = tipo;
-        this.valor = valor;
-        this.status = status;
-        this.idempotencyKey = idempotencyKey;
-        this.erro = erro;
-        this.criadoEm = criadoEm;
+    public static FilaMovimentoResponse from(FilaMovimento item) {
+        FilaMovimentoResponse response = new FilaMovimentoResponse();
+        response.setId(item.getId());
+        response.setContaId(item.getContaId());
+        response.setTipo(item.getTipo());
+        response.setValor(item.getValor());
+        response.setStatus(item.getStatus());
+        response.setIdempotencyKey(item.getIdempotencyKey());
+        response.setErro(item.getErro());
+        response.setCriadoEm(item.getCriadoEm());
+        return response;
     }
 
     public Long getId() {

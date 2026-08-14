@@ -26,6 +26,8 @@ Uma agência digital mantém contas **corrente** e **poupança**.
 | `SALDO` | `NUMBER(15,2)` — `BigDecimal` no Java |
 | `SEQ_CONTA` | Sequence Oracle do ID |
 
+Outras tabelas: `IDEMPOTENCIA` (chave única do pedido) e `FILA_MOVIMENTO` (fila de depósito/saque). Detalhe em **[cenarios-banco.md](./cenarios-banco.md)**.
+
 ### Regras de negócio (API)
 
 | Caso | Comportamento |
@@ -53,7 +55,9 @@ crudJava/
 ├── frontend/         # SPA Angular (layout agência)
 ├── docker-compose.yml
 ├── README.md
+├── INTRO.md
 ├── STACKS.md
+├── cenarios-banco.md
 └── PERGUNTAS_ENTREVISTA.md
 ```
 
@@ -141,9 +145,10 @@ curl -X POST http://localhost:8080/api/contas \
   -H "Content-Type: application/json" \
   -d "{\"agencia\":\"0001\",\"numero\":\"12345\",\"titular\":\"Maria Silva\",\"cpf\":\"12345678901\",\"tipo\":\"CORRENTE\",\"status\":\"ATIVA\"}"
 
-# Depositar
+# Depositar (idempotente: repetir a mesma chave não soma de novo)
 curl -X POST http://localhost:8080/api/contas/1/depositar \
   -H "Content-Type: application/json" \
+  -H "Idempotency-Key: pix-abc-1" \
   -d "{\"valor\":100.00}"
 
 # Sacar

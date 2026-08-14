@@ -26,11 +26,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidacao(MethodArgumentNotValidException ex) {
-        Map<String, String> erros = new HashMap<String, String>();
+        Map<String, String> erros = new HashMap<>();
         for (FieldError error : ex.getBindingResult().getFieldErrors()) {
             erros.put(error.getField(), error.getDefaultMessage());
         }
-        Map<String, Object> body = new HashMap<String, Object>();
+        Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now().toString());
         body.put("status", HttpStatus.BAD_REQUEST.value());
         body.put("erros", erros);
@@ -39,11 +39,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeral(Exception ex) {
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno: " + ex.getMessage());
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno");
     }
 
     private ResponseEntity<Map<String, Object>> build(HttpStatus status, String mensagem) {
-        Map<String, Object> body = new HashMap<String, Object>();
+        Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now().toString());
         body.put("status", status.value());
         body.put("mensagem", mensagem);

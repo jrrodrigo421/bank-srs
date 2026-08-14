@@ -1,5 +1,6 @@
 package com.entrevista.banco.dto;
 
+import com.entrevista.banco.domain.Conta;
 import com.entrevista.banco.domain.StatusConta;
 import com.entrevista.banco.domain.TipoConta;
 
@@ -21,17 +22,18 @@ public class ContaResponse {
     public ContaResponse() {
     }
 
-    public ContaResponse(Long id, String agencia, String numero, String titular, String cpf,
-                         TipoConta tipo, StatusConta status, BigDecimal saldo, LocalDateTime abertaEm) {
-        this.id = id;
-        this.agencia = agencia;
-        this.numero = numero;
-        this.titular = titular;
-        this.cpf = cpf;
-        this.tipo = tipo;
-        this.status = status;
-        this.saldo = saldo;
-        this.abertaEm = abertaEm;
+    public static ContaResponse from(Conta conta) {
+        ContaResponse response = new ContaResponse();
+        response.setId(conta.getId());
+        response.setAgencia(conta.getAgencia());
+        response.setNumero(conta.getNumero());
+        response.setTitular(conta.getTitular());
+        response.setCpf(conta.getCpf());
+        response.setTipo(conta.getTipo());
+        response.setStatus(conta.getStatus());
+        response.setSaldo(conta.getSaldo());
+        response.setAbertaEm(conta.getAbertaEm());
+        return response;
     }
 
     public Long getId() {

@@ -46,9 +46,7 @@ class ContaControllerTest {
     @Test
     void deveAbrirConta() throws Exception {
         ContaRequest request = requestValido();
-        ContaResponse response = new ContaResponse(
-                1L, "0001", "12345", "Maria Silva", "12345678901",
-                TipoConta.CORRENTE, StatusConta.ATIVA, BigDecimal.ZERO, LocalDateTime.now());
+        ContaResponse response = conta("0001", BigDecimal.ZERO);
 
         when(contaService.abrir(any(ContaRequest.class))).thenReturn(response);
 
@@ -62,9 +60,7 @@ class ContaControllerTest {
 
     @Test
     void deveListarContas() throws Exception {
-        ContaResponse response = new ContaResponse(
-                1L, "0001", "12345", "Maria Silva", "12345678901",
-                TipoConta.CORRENTE, StatusConta.ATIVA, new BigDecimal("10.00"), LocalDateTime.now());
+        ContaResponse response = conta("0001", new BigDecimal("10.00"));
         when(contaService.listar(null, null)).thenReturn(Collections.singletonList(response));
 
         mockMvc.perform(get("/api/contas"))
@@ -76,9 +72,7 @@ class ContaControllerTest {
     void deveDepositar() throws Exception {
         MovimentoRequest movimento = new MovimentoRequest();
         movimento.setValor(new BigDecimal("50.00"));
-        ContaResponse response = new ContaResponse(
-                1L, "0001", "12345", "Maria Silva", "12345678901",
-                TipoConta.CORRENTE, StatusConta.ATIVA, new BigDecimal("50.00"), LocalDateTime.now());
+        ContaResponse response = conta("0001", new BigDecimal("50.00"));
 
         when(contaService.depositar(eq(1L), any(MovimentoRequest.class), any()))
                 .thenReturn(response);
@@ -123,5 +117,19 @@ class ContaControllerTest {
         request.setTipo(TipoConta.CORRENTE);
         request.setStatus(StatusConta.ATIVA);
         return request;
+    }
+
+    private ContaResponse conta(String agencia, BigDecimal saldo) {
+        ContaResponse response = new ContaResponse();
+        response.setId(1L);
+        response.setAgencia(agencia);
+        response.setNumero("12345");
+        response.setTitular("Maria Silva");
+        response.setCpf("12345678901");
+        response.setTipo(TipoConta.CORRENTE);
+        response.setStatus(StatusConta.ATIVA);
+        response.setSaldo(saldo);
+        response.setAbertaEm(LocalDateTime.now());
+        return response;
     }
 }
