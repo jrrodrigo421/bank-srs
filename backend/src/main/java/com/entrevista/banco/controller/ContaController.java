@@ -46,6 +46,12 @@ public class ContaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(contaService.abrir(request));
     }
 
+    @GetMapping("/saldo-total")
+    @Operation(summary = "Soma do saldo de todas as contas")
+    public ResponseEntity<java.math.BigDecimal> saldoTotal() {
+        return ResponseEntity.ok(contaService.somarSaldos());
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Buscar conta por ID")
     public ResponseEntity<ContaResponse> buscarPorId(@PathVariable Long id) {

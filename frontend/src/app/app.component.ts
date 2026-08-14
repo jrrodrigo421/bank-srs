@@ -14,6 +14,7 @@ import { ContaService } from './services/conta.service';
 export class AppComponent implements OnInit {
 
   contas: Conta[] = [];
+  totalSaldo = 0;
   form: Conta = this.novaConta();
   editandoId: number | null = null;
   filtroStatus: StatusConta | '' = '';
@@ -34,10 +35,6 @@ export class AppComponent implements OnInit {
     this.carregar();
   }
 
-  get totalSaldo(): number {
-    return this.contas.reduce((acc, c) => acc + (c.saldo || 0), 0);
-  }
-
   carregar(): void {
     this.carregando = true;
     this.erro = '';
@@ -50,6 +47,9 @@ export class AppComponent implements OnInit {
         this.erro = 'Falha ao carregar contas. Verifique se a API está no ar.';
         this.carregando = false;
       }
+    });
+    this.contaService.saldoTotal().subscribe({
+      next: (total) => this.totalSaldo = Number(total) || 0
     });
   }
 

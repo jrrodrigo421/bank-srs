@@ -23,6 +23,10 @@ export class ContaService {
     return this.http.get<Conta[]>(`${this.apiUrl}${query}`);
   }
 
+  saldoTotal(): Observable<number> {
+    return this.http.get<number>(`${this.apiUrl}/saldo-total`);
+  }
+
   abrir(conta: Conta): Observable<Conta> {
     return this.http.post<Conta>(this.apiUrl, conta);
   }

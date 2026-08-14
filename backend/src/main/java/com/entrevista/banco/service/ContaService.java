@@ -6,6 +6,7 @@ import com.entrevista.banco.dto.ContaRequest;
 import com.entrevista.banco.dto.ContaResponse;
 import com.entrevista.banco.dto.MovimentoRequest;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface ContaService {
@@ -15,6 +16,8 @@ public interface ContaService {
     ContaResponse buscarPorId(Long id);
 
     List<ContaResponse> listar(StatusConta status, TipoConta tipo);
+
+    BigDecimal somarSaldos();
 
     ContaResponse atualizar(Long id, ContaRequest request);
 

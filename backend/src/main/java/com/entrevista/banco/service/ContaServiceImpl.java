@@ -69,6 +69,13 @@ public class ContaServiceImpl implements ContaService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public BigDecimal somarSaldos() {
+        BigDecimal total = contaRepository.somarSaldos();
+        return total == null ? BigDecimal.ZERO : total;
+    }
+
+    @Override
     public ContaResponse atualizar(Long id, ContaRequest request) {
         Conta conta = buscarEntidade(id);
         if ((!request.getAgencia().equals(conta.getAgencia())
