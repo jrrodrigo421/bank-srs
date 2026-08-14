@@ -18,7 +18,7 @@ public class AppConfig implements WebMvcConfigurer {
                         .title("API Contas Bancárias")
                         .description("Cadastro de contas, depósito e saque — cenário simples de banco")
                         .version("1.0.0")
-                        .contact(new Contact().name("Entrevista Dev Pleno")));
+                        .contact(new Contact().name("testando bank api")));
     }
 
     @Override
