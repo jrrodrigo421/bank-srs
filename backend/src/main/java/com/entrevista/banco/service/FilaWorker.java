@@ -12,7 +12,7 @@ public class FilaWorker {
         this.filaService = filaService;
     }
 
-    @Scheduled(fixedDelay = 3000)
+    @Scheduled(fixedDelay = 15000)
     public void processar() {
         filaService.processarProxima();
     }
