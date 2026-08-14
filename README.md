@@ -2,12 +2,14 @@
 
 Projeto simples para preparação de entrevista **Dev Pleno**.
 
-| Camada | Stack |
-|--------|--------|
-| Backend | Java 8, Spring Boot 2.7, Oracle, JPA, Swagger (springdoc), testes unitários |
-| Frontend | Angular 17, HTML, CSS |
-| Qualidade | SOLID, JaCoCo, SonarQube (`sonar-project.properties`) |
-| Infra | Docker + Docker Compose |
+
+| Camada    | Stack                                                                       |
+| --------- | --------------------------------------------------------------------------- |
+| Backend   | Java 8, Spring Boot 2.7, Oracle, JPA, Swagger (springdoc), testes unitários |
+| Frontend  | Angular 17, HTML, CSS                                                       |
+| Qualidade | SOLID, JaCoCo, SonarQube (`sonar-project.properties`)                       |
+| Infra     | Docker + Docker Compose                                                     |
+
 
 ---
 
@@ -32,16 +34,19 @@ crudJava/
 
 ### Arquitetura do backend (SOLID)
 
-| Camada | Responsabilidade |
-|--------|------------------|
-| `controller` | HTTP / contratos da API |
-| `service` (interface + impl) | Regras de negócio |
-| `repository` | Acesso a dados (JPA) |
-| `domain` | Entidade e enum |
-| `dto` | Request/Response (não expõe entidade) |
-| `exception` | Tratamento centralizado de erros |
+
+| Camada                       | Responsabilidade                      |
+| ---------------------------- | ------------------------------------- |
+| `controller`                 | HTTP / contratos da API               |
+| `service` (interface + impl) | Regras de negócio                     |
+| `repository`                 | Acesso a dados (JPA)                  |
+| `domain`                     | Entidade e enum                       |
+| `dto`                        | Request/Response (não expõe entidade) |
+| `exception`                  | Tratamento centralizado de erros      |
+
 
 Princípios aplicados:
+
 - **S** — cada classe com uma responsabilidade
 - **O** — extensão via interface `TarefaService`
 - **L** — implementação substitui a interface sem quebrar o contrato
@@ -54,13 +59,15 @@ Princípios aplicados:
 
 Base: `http://localhost:8080/api/tarefas`
 
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| POST | `/api/tarefas` | Criar |
-| GET | `/api/tarefas` | Listar (query `?status=PENDENTE`) |
-| GET | `/api/tarefas/{id}` | Buscar por ID |
-| PUT | `/api/tarefas/{id}` | Atualizar |
-| DELETE | `/api/tarefas/{id}` | Excluir |
+
+| Método | Endpoint            | Descrição                         |
+| ------ | ------------------- | --------------------------------- |
+| POST   | `/api/tarefas`      | Criar                             |
+| GET    | `/api/tarefas`      | Listar (query `?status=PENDENTE`) |
+| GET    | `/api/tarefas/{id}` | Buscar por ID                     |
+| PUT    | `/api/tarefas/{id}` | Atualizar                         |
+| DELETE | `/api/tarefas/{id}` | Excluir                           |
+
 
 Status possíveis: `PENDENTE`, `EM_ANDAMENTO`, `CONCLUIDA`
 
@@ -76,10 +83,10 @@ Status possíveis: `PENDENTE`, `EM_ANDAMENTO`, `CONCLUIDA`
 
 ### Swagger
 
-- UI: http://localhost:8080/swagger-ui.html  
-- OpenAPI: http://localhost:8080/api-docs  
+- UI: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)  
+- OpenAPI: [http://localhost:8080/api-docs](http://localhost:8080/api-docs)
 
-Com Docker (via Nginx do frontend): http://localhost:4200/swagger-ui.html
+Com Docker (via Nginx do frontend): [http://localhost:4200/swagger-ui.html](http://localhost:4200/swagger-ui.html)
 
 ---
 
@@ -93,11 +100,13 @@ docker compose up --build
 
 Aguarde o Oracle ficar healthy (pode levar 1–2 minutos na primeira vez).
 
-| Serviço | URL |
-|---------|-----|
-| Frontend | http://localhost:4200 |
-| Backend / Swagger | http://localhost:8080/swagger-ui.html |
-| Oracle | `localhost:1521` / service `XEPDB1` |
+
+| Serviço           | URL                                                                            |
+| ----------------- | ------------------------------------------------------------------------------ |
+| Frontend          | [http://localhost:4200](http://localhost:4200)                                 |
+| Backend / Swagger | [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html) |
+| Oracle            | `localhost:1521` / service `XEPDB1`                                            |
+
 
 Usuário Oracle da aplicação: `tarefas` / `tarefas`
 
@@ -113,14 +122,14 @@ docker compose down
 
 ### Backend
 
-1. Java 8+ e Maven instalados  
+1. Java 8+ e Maven instalados
 2. Oracle acessível (ou use o container só do banco):
 
 ```bash
 docker compose up oracle -d
 ```
 
-3. Na pasta `backend`:
+1. Na pasta `backend`:
 
 ```bash
 mvn spring-boot:run
@@ -148,7 +157,7 @@ pnpm install
 pnpm start
 ```
 
-App em http://localhost:4200 (API em `http://localhost:8080`).
+App em [http://localhost:4200](http://localhost:4200) (API em `http://localhost:8080`).
 
 ---
 
