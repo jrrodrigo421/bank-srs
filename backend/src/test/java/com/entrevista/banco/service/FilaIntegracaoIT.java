@@ -32,6 +32,7 @@ class FilaIntegracaoIT {
 
     @Test
     void deveProcessarDepositoDaFila() {
+        System.out.println("[fila IT] abre conta, enfileira deposito 25, processa item -> saldo 25 e PROCESSADO");
         ContaRequest cadastro = new ContaRequest();
         cadastro.setAgencia("0088");
         cadastro.setNumero(String.valueOf(System.nanoTime()).substring(0, 10));
@@ -47,8 +48,11 @@ class FilaIntegracaoIT {
 
         FilaMovimento processado = filaService.processarProxima();
 
+        BigDecimal saldo = contaRepository.findById(conta.getId()).get().getSaldo();
+        System.out.println("[fila IT] status=" + processado.getStatus() + " saldo=" + saldo);
         assertNotNull(processado);
         assertEquals(StatusFila.PROCESSADO, processado.getStatus());
-        assertEquals(0, new BigDecimal("25.00").compareTo(contaRepository.findById(conta.getId()).get().getSaldo()));
+        assertEquals(0, new BigDecimal("25.00").compareTo(saldo));
+        System.out.println("[fila IT] OK");
     }
 }

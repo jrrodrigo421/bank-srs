@@ -56,6 +56,7 @@ class FilaServiceImplTest {
 
     @Test
     void deveEnfileirarComoPendente() {
+        System.out.println("[fila] enfileira deposito 40 na conta 10 -> status PENDENTE (ainda nao mexe no saldo)");
         when(contaService.buscarPorId(10L)).thenReturn(new ContaResponse());
         when(filaRepository.save(any(FilaMovimento.class))).thenAnswer(inv -> {
             FilaMovimento f = inv.getArgument(0);
@@ -68,10 +69,12 @@ class FilaServiceImplTest {
         assertEquals(StatusFila.PENDENTE, response.getStatus());
         assertEquals(TipoMovimento.DEPOSITO, response.getTipo());
         verify(filaRepository).save(any(FilaMovimento.class));
+        System.out.println("[fila] OK: status=" + response.getStatus());
     }
 
     @Test
     void deveProcessarProximaComLock() {
+        System.out.println("[fila worker] pega PENDENTE com lock, chama depositar, marca PROCESSADO");
         when(filaRepository.lockProximasPendentes(eq(StatusFila.PENDENTE), any(Pageable.class)))
                 .thenReturn(Collections.singletonList(item));
         when(contaService.depositar(eq(10L), any(MovimentoRequest.class), eq("fila-1")))
@@ -82,10 +85,12 @@ class FilaServiceImplTest {
 
         assertEquals(StatusFila.PROCESSADO, processado.getStatus());
         verify(contaService).depositar(eq(10L), any(MovimentoRequest.class), eq("fila-1"));
+        System.out.println("[fila worker] OK: status=" + processado.getStatus());
     }
 
     @Test
     void deveMarcarErroQuandoRegraFalhar() {
+        System.out.println("[fila erro] saque na fila falha (saldo insuficiente) -> item vira ERRO, nao some");
         item.setTipo(TipoMovimento.SAQUE);
         when(filaRepository.lockProximasPendentes(eq(StatusFila.PENDENTE), any(Pageable.class)))
                 .thenReturn(Collections.singletonList(item));
@@ -97,13 +102,16 @@ class FilaServiceImplTest {
 
         assertEquals(StatusFila.ERRO, processado.getStatus());
         assertEquals("Saldo insuficiente", processado.getErro());
+        System.out.println("[fila erro] OK: status=" + processado.getStatus() + " msg=" + processado.getErro());
     }
 
     @Test
     void deveRetornarNullQuandoFilaVazia() {
+        System.out.println("[fila vazia] nenhum PENDENTE -> processarProxima retorna null");
         when(filaRepository.lockProximasPendentes(eq(StatusFila.PENDENTE), any(Pageable.class)))
                 .thenReturn(Collections.emptyList());
 
         assertNull(filaService.processarProxima());
+        System.out.println("[fila vazia] OK: null");
     }
 }

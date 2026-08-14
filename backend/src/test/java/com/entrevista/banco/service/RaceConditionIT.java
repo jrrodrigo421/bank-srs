@@ -34,6 +34,8 @@ class RaceConditionIT {
 
     @Test
     void doisSaquesConcorrentesNaoDeixamSaldoNegativo() throws Exception {
+        System.out.println("[race] saldo 100, 2 threads sacam 100 ao mesmo tempo (SELECT FOR UPDATE)");
+        System.out.println("[race] esperado: 1 saque ok, 1 falha, saldo final 0 (nunca negativo)");
         ContaRequest cadastro = new ContaRequest();
         cadastro.setAgencia("0099");
         cadastro.setNumero(String.valueOf(System.nanoTime()).substring(0, 10));
@@ -75,8 +77,13 @@ class RaceConditionIT {
         pool.shutdown();
 
         BigDecimal saldo = contaRepository.findById(conta.getId()).get().getSaldo();
+        System.out.println("[race] saldo final=" + saldo + " | saques que falharam=" + erros.size());
+        if (!erros.isEmpty()) {
+            System.out.println("[race] erro do perdedor=" + erros.get(0).getMessage());
+        }
         assertTrue(saldo.compareTo(BigDecimal.ZERO) >= 0);
         assertEquals(0, saldo.compareTo(BigDecimal.ZERO));
         assertEquals(1, erros.size());
+        System.out.println("[race] OK: lock pessimista impediu saldo negativo");
     }
 }

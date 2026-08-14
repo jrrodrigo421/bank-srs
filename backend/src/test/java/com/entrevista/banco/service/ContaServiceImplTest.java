@@ -70,24 +70,29 @@ class ContaServiceImplTest {
 
     @Test
     void deveAbrirContaComSaldoZero() {
+        System.out.println("[abrir] agencia+numero novos -> conta salva com saldo 0");
         when(contaRepository.existsByAgenciaAndNumero("0001", "12345")).thenReturn(false);
         when(contaRepository.save(any(Conta.class))).thenReturn(conta);
 
         contaService.abrir(request);
 
         verify(contaRepository).save(any(Conta.class));
+        System.out.println("[abrir] OK: save chamado, nao duplicou");
     }
 
     @Test
     void naoDeveAbrirContaDuplicada() {
+        System.out.println("[abrir duplicada] mesma agencia+numero ja existe -> deve recusar");
         when(contaRepository.existsByAgenciaAndNumero("0001", "12345")).thenReturn(true);
 
         assertThrows(RegraNegocioException.class, () -> contaService.abrir(request));
         verify(contaRepository, never()).save(any(Conta.class));
+        System.out.println("[abrir duplicada] OK: RegraNegocioException e nenhum save");
     }
 
     @Test
     void deveDepositarEmContaAtiva() {
+        System.out.println("[deposito] conta ATIVA saldo 100 + 50 -> espera 150 (lock FOR UPDATE)");
         when(contaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(conta));
         when(contaRepository.save(any(Conta.class))).thenReturn(conta);
 
@@ -95,10 +100,12 @@ class ContaServiceImplTest {
 
         assertEquals(new BigDecimal("150.00"), conta.getSaldo());
         verify(contaRepository).findByIdForUpdate(1L);
+        System.out.println("[deposito] OK: saldo=" + conta.getSaldo());
     }
 
     @Test
     void deveSerIdempotenteNoDeposito() {
+        System.out.println("[idempotencia] mesma chave dep-1 duas vezes -> nao credita de novo, devolve snapshot");
         Idempotencia registro = new Idempotencia();
         registro.setChave("dep-1");
         registro.setRespostaJson(
@@ -112,10 +119,12 @@ class ContaServiceImplTest {
         assertEquals(0, primeira.getSaldo().compareTo(segunda.getSaldo()));
         verify(contaRepository, never()).findByIdForUpdate(1L);
         verify(contaRepository, never()).save(any(Conta.class));
+        System.out.println("[idempotencia] OK: saldo repetido=" + primeira.getSaldo() + " sem lock/save");
     }
 
     @Test
     void deveGravarChaveNaPrimeiraVez() {
+        System.out.println("[idempotencia 1a vez] chave nova -> processa deposito e grava na tabela IDEMPOTENCIA");
         when(idempotenciaRepository.findByChave("dep-1")).thenReturn(Optional.empty());
         when(contaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(conta));
         when(contaRepository.save(any(Conta.class))).thenReturn(conta);
@@ -123,36 +132,45 @@ class ContaServiceImplTest {
         contaService.depositar(1L, movimento, "dep-1");
 
         verify(idempotenciaRepository).save(any(Idempotencia.class));
+        System.out.println("[idempotencia 1a vez] OK: chave gravada, saldo=" + conta.getSaldo());
     }
 
     @Test
     void naoDeveSacarSemSaldo() {
+        System.out.println("[saque] saldo 100, tenta sacar 200 -> recusa, nao fica negativo");
         movimento.setValor(new BigDecimal("200.00"));
         when(contaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(conta));
 
         assertThrows(RegraNegocioException.class, () -> contaService.sacar(1L, movimento, null));
+        System.out.println("[saque] OK: RegraNegocioException, saldo permanece " + conta.getSaldo());
     }
 
     @Test
     void naoDeveMovimentarContaBloqueada() {
+        System.out.println("[bloqueada] status BLOQUEADA -> deposito recusado");
         conta.setStatus(StatusConta.BLOQUEADA);
         when(contaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(conta));
 
         assertThrows(RegraNegocioException.class, () -> contaService.depositar(1L, movimento, null));
+        System.out.println("[bloqueada] OK: RegraNegocioException");
     }
 
     @Test
     void naoDeveEncerrarComSaldo() {
+        System.out.println("[encerrar] saldo 100 -> nao pode encerrar (so saldo 0)");
         when(contaRepository.findById(1L)).thenReturn(Optional.of(conta));
 
         assertThrows(RegraNegocioException.class, () -> contaService.encerrar(1L));
         verify(contaRepository, never()).delete(any(Conta.class));
+        System.out.println("[encerrar] OK: nao deletou");
     }
 
     @Test
     void deveLancar404QuandoNaoEncontrar() {
+        System.out.println("[404] id 99 inexistente -> RecursoNaoEncontradoException");
         when(contaRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(RecursoNaoEncontradoException.class, () -> contaService.buscarPorId(99L));
+        System.out.println("[404] OK");
     }
 }
