@@ -20,7 +20,7 @@ public interface ContaService {
 
     void encerrar(Long id);
 
-    ContaResponse depositar(Long id, MovimentoRequest request);
+    ContaResponse depositar(Long id, MovimentoRequest request, String idempotencyKey);
 
-    ContaResponse sacar(Long id, MovimentoRequest request);
+    ContaResponse sacar(Long id, MovimentoRequest request, String idempotencyKey);
 }

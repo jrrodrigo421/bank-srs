@@ -1,13 +1,16 @@
 package com.entrevista.banco.service;
 
 import com.entrevista.banco.domain.Conta;
+import com.entrevista.banco.domain.Idempotencia;
 import com.entrevista.banco.domain.StatusConta;
 import com.entrevista.banco.domain.TipoConta;
 import com.entrevista.banco.dto.ContaRequest;
+import com.entrevista.banco.dto.ContaResponse;
 import com.entrevista.banco.dto.MovimentoRequest;
 import com.entrevista.banco.exception.RecursoNaoEncontradoException;
 import com.entrevista.banco.exception.RegraNegocioException;
 import com.entrevista.banco.repository.ContaRepository;
+import com.entrevista.banco.repository.IdempotenciaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +33,9 @@ class ContaServiceImplTest {
 
     @Mock
     private ContaRepository contaRepository;
+
+    @Mock
+    private IdempotenciaRepository idempotenciaRepository;
 
     @InjectMocks
     private ContaServiceImpl contaService;
@@ -82,28 +88,57 @@ class ContaServiceImplTest {
 
     @Test
     void deveDepositarEmContaAtiva() {
-        when(contaRepository.findById(1L)).thenReturn(Optional.of(conta));
+        when(contaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(conta));
         when(contaRepository.save(any(Conta.class))).thenReturn(conta);
 
-        contaService.depositar(1L, movimento);
+        contaService.depositar(1L, movimento, null);
 
         assertEquals(new BigDecimal("150.00"), conta.getSaldo());
+        verify(contaRepository).findByIdForUpdate(1L);
+    }
+
+    @Test
+    void deveSerIdempotenteNoDeposito() {
+        Idempotencia registro = new Idempotencia();
+        registro.setChave("dep-1");
+        registro.setRespostaJson(
+                "{\"id\":1,\"agencia\":\"0001\",\"numero\":\"12345\",\"titular\":\"Maria Silva\","
+                        + "\"cpf\":\"12345678901\",\"tipo\":\"CORRENTE\",\"status\":\"ATIVA\",\"saldo\":150.00}");
+        when(idempotenciaRepository.findByChave("dep-1")).thenReturn(Optional.of(registro));
+
+        ContaResponse primeira = contaService.depositar(1L, movimento, "dep-1");
+        ContaResponse segunda = contaService.depositar(1L, movimento, "dep-1");
+
+        assertEquals(0, primeira.getSaldo().compareTo(segunda.getSaldo()));
+        verify(contaRepository, never()).findByIdForUpdate(1L);
+        verify(contaRepository, never()).save(any(Conta.class));
+    }
+
+    @Test
+    void deveGravarChaveNaPrimeiraVez() {
+        when(idempotenciaRepository.findByChave("dep-1")).thenReturn(Optional.empty());
+        when(contaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(conta));
+        when(contaRepository.save(any(Conta.class))).thenReturn(conta);
+
+        contaService.depositar(1L, movimento, "dep-1");
+
+        verify(idempotenciaRepository).save(any(Idempotencia.class));
     }
 
     @Test
     void naoDeveSacarSemSaldo() {
         movimento.setValor(new BigDecimal("200.00"));
-        when(contaRepository.findById(1L)).thenReturn(Optional.of(conta));
+        when(contaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(conta));
 
-        assertThrows(RegraNegocioException.class, () -> contaService.sacar(1L, movimento));
+        assertThrows(RegraNegocioException.class, () -> contaService.sacar(1L, movimento, null));
     }
 
     @Test
     void naoDeveMovimentarContaBloqueada() {
         conta.setStatus(StatusConta.BLOQUEADA);
-        when(contaRepository.findById(1L)).thenReturn(Optional.of(conta));
+        when(contaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(conta));
 
-        assertThrows(RegraNegocioException.class, () -> contaService.depositar(1L, movimento));
+        assertThrows(RegraNegocioException.class, () -> contaService.depositar(1L, movimento, null));
     }
 
     @Test

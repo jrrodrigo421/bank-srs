@@ -37,6 +37,9 @@ Uma agência digital mantém contas **corrente** e **poupança**.
 | Encerrar (DELETE) | Só com **saldo zero**. Senão → **400** |
 | Conta inexistente | **404** |
 | Validação (CPF, agência, valor) | **400** com mapa de campos |
+| Idempotência | Header `Idempotency-Key`: mesma chave não aplica o movimento de novo |
+| Race (saldo) | Depósito/saque usam `SELECT FOR UPDATE` na conta |
+| Fila | `FILA_MOVIMENTO` no Oracle; worker a cada 3s ou `POST /api/fila/processar` |
 
 Saldo usa `BigDecimal` (nunca `double` para dinheiro).
 
@@ -69,8 +72,11 @@ Base: `http://localhost:8080/api/contas`
 | GET | `/api/contas/{id}` | Buscar |
 | PUT | `/api/contas/{id}` | Atualizar cadastro (não mexe no saldo) |
 | DELETE | `/api/contas/{id}` | Encerrar (saldo zero) |
-| POST | `/api/contas/{id}/depositar` | `{ "valor": 100.00 }` |
-| POST | `/api/contas/{id}/sacar` | `{ "valor": 50.00 }` |
+| POST | `/api/contas/{id}/depositar` | `{ "valor": 100.00 }` + header opcional `Idempotency-Key` |
+| POST | `/api/contas/{id}/sacar` | `{ "valor": 50.00 }` + header opcional `Idempotency-Key` |
+| POST | `/api/contas/{id}/depositar-fila` | Enfileira depósito (`202`) |
+| POST | `/api/contas/{id}/sacar-fila` | Enfileira saque (`202`) |
+| POST | `/api/fila/processar` | Processa 1 item PENDENTE (lock na fila) |
 
 ### Body de cadastro
 

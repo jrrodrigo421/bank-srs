@@ -7,6 +7,7 @@ import com.entrevista.banco.dto.ContaResponse;
 import com.entrevista.banco.dto.MovimentoRequest;
 import com.entrevista.banco.exception.RegraNegocioException;
 import com.entrevista.banco.service.ContaService;
+import com.entrevista.banco.service.FilaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,9 @@ class ContaControllerTest {
 
     @MockBean
     private ContaService contaService;
+
+    @MockBean
+    private FilaService filaService;
 
     @Test
     void deveAbrirConta() throws Exception {
@@ -76,7 +80,8 @@ class ContaControllerTest {
                 1L, "0001", "12345", "Maria Silva", "12345678901",
                 TipoConta.CORRENTE, StatusConta.ATIVA, new BigDecimal("50.00"), LocalDateTime.now());
 
-        when(contaService.depositar(eq(1L), any(MovimentoRequest.class))).thenReturn(response);
+        when(contaService.depositar(eq(1L), any(MovimentoRequest.class), any()))
+                .thenReturn(response);
 
         mockMvc.perform(post("/api/contas/1/depositar")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -89,7 +94,7 @@ class ContaControllerTest {
     void deveRetornar400QuandoSaldoInsuficiente() throws Exception {
         MovimentoRequest movimento = new MovimentoRequest();
         movimento.setValor(new BigDecimal("50.00"));
-        when(contaService.sacar(eq(1L), any(MovimentoRequest.class)))
+        when(contaService.sacar(eq(1L), any(MovimentoRequest.class), any()))
                 .thenThrow(new RegraNegocioException("Saldo insuficiente"));
 
         mockMvc.perform(post("/api/contas/1/sacar")

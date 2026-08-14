@@ -1,6 +1,7 @@
 package com.entrevista.banco.service;
 
 import com.entrevista.banco.domain.Conta;
+import com.entrevista.banco.domain.Idempotencia;
 import com.entrevista.banco.domain.StatusConta;
 import com.entrevista.banco.domain.TipoConta;
 import com.entrevista.banco.dto.ContaRequest;
@@ -9,7 +10,12 @@ import com.entrevista.banco.dto.MovimentoRequest;
 import com.entrevista.banco.exception.RecursoNaoEncontradoException;
 import com.entrevista.banco.exception.RegraNegocioException;
 import com.entrevista.banco.repository.ContaRepository;
+import com.entrevista.banco.repository.IdempotenciaRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -21,9 +27,14 @@ import java.util.stream.Collectors;
 public class ContaServiceImpl implements ContaService {
 
     private final ContaRepository contaRepository;
+    private final IdempotenciaRepository idempotenciaRepository;
+    private final ObjectMapper objectMapper;
 
-    public ContaServiceImpl(ContaRepository contaRepository) {
+    public ContaServiceImpl(ContaRepository contaRepository, IdempotenciaRepository idempotenciaRepository) {
         this.contaRepository = contaRepository;
+        this.idempotenciaRepository = idempotenciaRepository;
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.registerModule(new JavaTimeModule());
     }
 
     @Override
@@ -80,24 +91,39 @@ public class ContaServiceImpl implements ContaService {
     }
 
     @Override
-    public ContaResponse depositar(Long id, MovimentoRequest request) {
-        Conta conta = contaAtiva(id);
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public ContaResponse depositar(Long id, MovimentoRequest request, String idempotencyKey) {
+        ContaResponse cached = respostaIdempotente(idempotencyKey);
+        if (cached != null) {
+            return cached;
+        }
+        Conta conta = contaAtivaComLock(id);
         conta.setSaldo(conta.getSaldo().add(request.getValor()));
-        return paraResponse(contaRepository.save(conta));
+        ContaResponse response = paraResponse(contaRepository.save(conta));
+        gravarIdempotencia(idempotencyKey, response);
+        return response;
     }
 
     @Override
-    public ContaResponse sacar(Long id, MovimentoRequest request) {
-        Conta conta = contaAtiva(id);
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public ContaResponse sacar(Long id, MovimentoRequest request, String idempotencyKey) {
+        ContaResponse cached = respostaIdempotente(idempotencyKey);
+        if (cached != null) {
+            return cached;
+        }
+        Conta conta = contaAtivaComLock(id);
         if (conta.getSaldo().compareTo(request.getValor()) < 0) {
             throw new RegraNegocioException("Saldo insuficiente");
         }
         conta.setSaldo(conta.getSaldo().subtract(request.getValor()));
-        return paraResponse(contaRepository.save(conta));
+        ContaResponse response = paraResponse(contaRepository.save(conta));
+        gravarIdempotencia(idempotencyKey, response);
+        return response;
     }
 
-    private Conta contaAtiva(Long id) {
-        Conta conta = buscarEntidade(id);
+    private Conta contaAtivaComLock(Long id) {
+        Conta conta = contaRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Conta não encontrada: " + id));
         if (conta.getStatus() != StatusConta.ATIVA) {
             throw new RegraNegocioException("Operação permitida apenas em conta ATIVA");
         }
@@ -107,6 +133,35 @@ public class ContaServiceImpl implements ContaService {
     private Conta buscarEntidade(Long id) {
         return contaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Conta não encontrada: " + id));
+    }
+
+    private ContaResponse respostaIdempotente(String chave) {
+        if (chave == null || chave.trim().isEmpty()) {
+            return null;
+        }
+        java.util.Optional<Idempotencia> existente = idempotenciaRepository.findByChave(chave);
+        if (!existente.isPresent()) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(existente.get().getRespostaJson(), ContaResponse.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Falha ao ler resposta idempotente", e);
+        }
+    }
+
+    private void gravarIdempotencia(String chave, ContaResponse response) {
+        if (chave == null || chave.trim().isEmpty()) {
+            return;
+        }
+        try {
+            Idempotencia registro = new Idempotencia();
+            registro.setChave(chave);
+            registro.setRespostaJson(objectMapper.writeValueAsString(response));
+            idempotenciaRepository.save(registro);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Falha ao gravar idempotência", e);
+        }
     }
 
     private void mapearCadastro(ContaRequest request, Conta conta) {

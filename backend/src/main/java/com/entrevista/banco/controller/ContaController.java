@@ -2,10 +2,13 @@ package com.entrevista.banco.controller;
 
 import com.entrevista.banco.domain.StatusConta;
 import com.entrevista.banco.domain.TipoConta;
+import com.entrevista.banco.domain.TipoMovimento;
 import com.entrevista.banco.dto.ContaRequest;
 import com.entrevista.banco.dto.ContaResponse;
+import com.entrevista.banco.dto.FilaMovimentoResponse;
 import com.entrevista.banco.dto.MovimentoRequest;
 import com.entrevista.banco.service.ContaService;
+import com.entrevista.banco.service.FilaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,9 +33,11 @@ import java.util.List;
 public class ContaController {
 
     private final ContaService contaService;
+    private final FilaService filaService;
 
-    public ContaController(ContaService contaService) {
+    public ContaController(ContaService contaService, FilaService filaService) {
         this.contaService = contaService;
+        this.filaService = filaService;
     }
 
     @PostMapping
@@ -70,18 +76,40 @@ public class ContaController {
     }
 
     @PostMapping("/{id}/depositar")
-    @Operation(summary = "Depositar (somente conta ATIVA)")
+    @Operation(summary = "Depositar (somente conta ATIVA). Header Idempotency-Key evita débito duplicado.")
     public ResponseEntity<ContaResponse> depositar(
             @PathVariable Long id,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
             @Valid @RequestBody MovimentoRequest request) {
-        return ResponseEntity.ok(contaService.depositar(id, request));
+        return ResponseEntity.ok(contaService.depositar(id, request, idempotencyKey));
     }
 
     @PostMapping("/{id}/sacar")
-    @Operation(summary = "Sacar (somente conta ATIVA e com saldo)")
+    @Operation(summary = "Sacar (somente conta ATIVA e com saldo). Header Idempotency-Key evita saque duplicado.")
     public ResponseEntity<ContaResponse> sacar(
             @PathVariable Long id,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
             @Valid @RequestBody MovimentoRequest request) {
-        return ResponseEntity.ok(contaService.sacar(id, request));
+        return ResponseEntity.ok(contaService.sacar(id, request, idempotencyKey));
+    }
+
+    @PostMapping("/{id}/depositar-fila")
+    @Operation(summary = "Enfileira depósito (tabela FILA_MOVIMENTO)")
+    public ResponseEntity<FilaMovimentoResponse> depositarFila(
+            @PathVariable Long id,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @Valid @RequestBody MovimentoRequest request) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+                .body(filaService.enfileirar(id, TipoMovimento.DEPOSITO, request, idempotencyKey));
+    }
+
+    @PostMapping("/{id}/sacar-fila")
+    @Operation(summary = "Enfileira saque (tabela FILA_MOVIMENTO)")
+    public ResponseEntity<FilaMovimentoResponse> sacarFila(
+            @PathVariable Long id,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @Valid @RequestBody MovimentoRequest request) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+                .body(filaService.enfileirar(id, TipoMovimento.SAQUE, request, idempotencyKey));
     }
 }
