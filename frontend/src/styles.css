@@ -1,3 +1,17 @@
+:root {
+  --teste-brand: #201547;
+  --teste-brand-deep: #160e33;
+  --teste-orange: #fa4616;
+  --teste-orange-hot: #f03607;
+  --teste-heading: #232933;
+  --teste-text: #171b27;
+  --teste-muted: #5c6478;
+  --teste-line: #e4e1ee;
+  --teste-surface: #ffffff;
+  --teste-bg: #f4f2f8;
+  --teste-white: #ffffff;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -5,10 +19,8 @@
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background:
-    radial-gradient(circle at top right, #1a3a66 0%, transparent 42%),
-    #0b1f3a;
-  color: #f4efe4;
+  font-family: Lato, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--teste-bg);
+  color: var(--teste-text);
   min-height: 100vh;
 }

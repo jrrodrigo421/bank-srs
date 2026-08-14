@@ -27,9 +27,9 @@
 .logo {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
-  background: linear-gradient(145deg, #d4af37, #8a6d1f);
-  color: #0b1f3a;
+  border-radius: 10px;
+  background: linear-gradient(145deg, var(--teste-orange), var(--teste-orange-hot));
+  color: var(--teste-white);
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -40,16 +40,15 @@
 .brand strong {
   display: block;
   font-size: 1.2rem;
-  color: #f4efe4;
+  color: var(--teste-brand);
 }
 
 .brand small {
-  color: #b7c0cc;
+  color: var(--teste-muted);
 }
 
 .kpi {
-  background: #122744;
-  border: 1px solid #1e3a5f;
+  background: var(--teste-brand);
   border-radius: 12px;
   padding: 0.7rem 1.1rem;
   text-align: right;
@@ -58,11 +57,11 @@
 .kpi span {
   display: block;
   font-size: 0.75rem;
-  color: #9aa8b8;
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .kpi strong {
-  color: #d4af37;
+  color: var(--teste-orange);
   font-size: 1.15rem;
 }
 
@@ -74,22 +73,22 @@
 }
 
 .panel {
-  background: #122744;
-  border: 1px solid #1e3a5f;
+  background: var(--teste-surface);
+  border: 1px solid var(--teste-line);
   border-radius: 16px;
   padding: 1.25rem;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 8px 28px rgba(32, 21, 71, 0.08);
 }
 
 .form-panel h2,
 .lista-header h2 {
-  color: #f4efe4;
+  color: var(--teste-heading);
   font-size: 1.05rem;
   margin-bottom: 0.35rem;
 }
 
 .hint {
-  color: #9aa8b8;
+  color: var(--teste-muted);
   font-size: 0.82rem;
   margin-bottom: 1rem;
 }
@@ -98,7 +97,7 @@ label {
   display: block;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #c5d0dc;
+  color: var(--teste-heading);
   margin-bottom: 0.75rem;
 }
 
@@ -108,16 +107,16 @@ select {
   margin-top: 0.3rem;
   padding: 0.55rem 0.7rem;
   border-radius: 8px;
-  border: 1px solid #2a4a73;
-  background: #0b1f3a;
-  color: #f4efe4;
+  border: 1px solid var(--teste-line);
+  background: var(--teste-white);
+  color: var(--teste-text);
   font: inherit;
 }
 
 input:focus,
 select:focus {
   outline: none;
-  border-color: #d4af37;
+  border-color: var(--teste-orange);
 }
 
 .grid-2 {
@@ -142,14 +141,18 @@ select:focus {
 }
 
 .btn.gold {
-  background: #d4af37;
-  color: #0b1f3a;
+  background: var(--teste-orange);
+  color: var(--teste-white);
+}
+
+.btn.gold:hover {
+  background: var(--teste-orange-hot);
 }
 
 .btn.ghost {
   background: transparent;
-  color: #c5d0dc;
-  border: 1px solid #2a4a73;
+  color: var(--teste-brand);
+  border: 1px solid var(--teste-line);
 }
 
 .lista-header {
@@ -186,8 +189,8 @@ th,
 td {
   padding: 0.75rem 0.5rem;
   text-align: left;
-  border-bottom: 1px solid #1e3a5f;
-  color: #e8eef5;
+  border-bottom: 1px solid var(--teste-line);
+  color: var(--teste-text);
   vertical-align: top;
 }
 
@@ -195,12 +198,12 @@ th {
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #9aa8b8;
+  color: var(--teste-muted);
 }
 
 td small {
   display: block;
-  color: #9aa8b8;
+  color: var(--teste-muted);
   margin-top: 0.2rem;
   font-size: 0.78rem;
 }
@@ -212,7 +215,7 @@ td small {
 .saldo {
   font-variant-numeric: tabular-nums;
   font-weight: 700;
-  color: #d4af37;
+  color: var(--teste-brand);
   white-space: nowrap;
 }
 
@@ -226,14 +229,15 @@ td small {
 .link {
   background: none;
   border: none;
-  color: #8eb4e8;
+  color: var(--teste-orange);
   cursor: pointer;
   font-size: 0.78rem;
   padding: 0;
+  font-weight: 600;
 }
 
 .link.danger {
-  color: #f0a3a3;
+  color: #b42318;
 }
 
 .badge {
@@ -245,35 +249,35 @@ td small {
 }
 
 .badge[data-status='ATIVA'] {
-  background: #1e4d3a;
-  color: #8ee0b5;
+  background: #e8f7ee;
+  color: #17663a;
 }
 
 .badge[data-status='BLOQUEADA'] {
-  background: #4d3a1e;
-  color: #f0d48a;
+  background: #fff4e8;
+  color: var(--teste-orange-hot);
 }
 
 .badge[data-status='ENCERRADA'] {
-  background: #3d2a2a;
-  color: #f0a3a3;
+  background: #f4f2f8;
+  color: var(--teste-muted);
 }
 
 .movimento {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #1e3a5f;
+  border-top: 1px solid var(--teste-line);
 }
 
 .movimento h3 {
-  color: #f4efe4;
+  color: var(--teste-heading);
   font-size: 0.95rem;
   margin-bottom: 0.6rem;
 }
 
 .erro {
-  background: #3d2a2a;
-  color: #f0a3a3;
+  background: #fdecea;
+  color: #b42318;
   padding: 0.65rem 0.8rem;
   border-radius: 8px;
   margin-bottom: 0.8rem;
@@ -281,7 +285,7 @@ td small {
 }
 
 .info {
-  color: #9aa8b8;
+  color: var(--teste-muted);
   font-size: 0.9rem;
 }
 

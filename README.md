@@ -137,6 +137,80 @@ Testes: `mvn test` (relatório JaCoCo em `backend/target/site/jacoco/index.html`
 
 ---
 
+## SonarQube local (Windows)
+
+A **aplicação continua Java 8**. Só o *scanner* do Sonar precisa de **JDK 11**.
+
+### 1. Subir o servidor
+
+```powershell
+docker run -d --name sonarqube -p 9000:9000 sonarqube:9.9-community
+```
+
+Espere 1–2 min. Abra http://localhost:9000
+
+- Primeiro login: `admin` / `admin`
+- O Sonar pede **trocar a senha** (ex.: `admin123`)
+
+### 2. JDK 11 só nesta sessão (PowerShell)
+
+```powershell
+winget install --id EclipseAdoptium.Temurin.11.JDK -e
+```
+
+Feche e abra o terminal. Depois:
+
+```powershell
+$env:JAVA_HOME = (Get-ChildItem "C:\Program Files\Eclipse Adoptium" -Directory | Where-Object { $_.Name -like "jdk-11*" } | Select-Object -First 1).FullName
+$env:Path = "$env:JAVA_HOME\bin;" + $env:Path
+java -version
+```
+
+Tem que aparecer **11**.
+
+### 3. Analisar o backend
+
+Na pasta `backend` (gera testes + JaCoCo e envia ao Sonar):
+
+```powershell
+cd C:\Users\rodrigo.junior\Desktop\projetos\crudJava\backend
+mvn test
+mvn sonar:sonar "-Dsonar.host.url=http://localhost:9000" "-Dsonar.login=admin" "-Dsonar.password=admin123"
+```
+
+Troque `admin123` se a senha do Sonar for outra.
+
+Dashboard: http://localhost:9000/dashboard?id=com.entrevista%3Acrud-banco
+
+### Config no projeto
+
+**`backend/pom.xml`**
+
+- `java.version` = `1.8` (compile da app)
+- plugin JaCoCo `0.8.11` (cobertura em `target/site/jacoco/jacoco.xml`)
+- plugin `org.sonarsource.scanner.maven:sonar-maven-plugin:3.11.0.3922`
+
+**`backend/sonar-project.properties`**
+
+```properties
+sonar.projectKey=com.entrevista:crud-banco
+sonar.projectName=crud-banco
+sonar.projectVersion=1.0.0
+sonar.sources=src/main/java
+sonar.tests=src/test/java
+sonar.java.binaries=target/classes
+sonar.java.test.binaries=target/test-classes
+sonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+sonar.sourceEncoding=UTF-8
+sonar.java.source=1.8
+```
+
+Com `mvn sonar:sonar` a chave efetiva é o GAV Maven: **`com.entrevista:crud-banco`**.
+
+Quality Gate **Failed** com Bugs/Smells em A: revise **Security Hotspots** na UI (Safe/Fixed). O scan em si pode ter dado `BUILD SUCCESS` mesmo com o gate vermelho.
+
+---
+
 ## Curl
 
 ```bash
