@@ -58,10 +58,7 @@ crudJava/
 ├── frontend/         # SPA Angular (layout agência)
 ├── docker-compose.yml
 ├── README.md
-├── INTRO.md
-├── STACKS.md
-├── cenarios-banco.md
-└── PERGUNTAS_ENTREVISTA.md
+
 ```
 
 Camadas SOLID: `controller` → `ContaService` → `ContaRepository` → entidade `Conta` / DTOs.
