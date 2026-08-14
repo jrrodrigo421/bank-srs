@@ -2,6 +2,9 @@
 
 CRUD simples de **contas bancárias** (agência, número, titular, CPF, tipo, status e saldo) para treino de entrevista **Dev Pleno** em contexto financeiro.
 
+
+
+
 Saldo **não** é editado no cadastro: começa em `0` e muda só com **depósito** e **saque**.
 
 | Camada | Stack |
