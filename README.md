@@ -182,7 +182,3 @@ curl -X DELETE http://localhost:8080/api/tarefas/1
 ```
 
 ---
-
-## Preparação para entrevista
-
-Veja o arquivo **[PERGUNTAS_ENTREVISTA.md](./PERGUNTAS_ENTREVISTA.md)** com perguntas conceituais e técnicas sobre a stack da vaga.
