@@ -12,10 +12,10 @@
     </parent>
 
     <groupId>com.entrevista</groupId>
-    <artifactId>crud-tarefas</artifactId>
+    <artifactId>crud-banco</artifactId>
     <version>1.0.0</version>
-    <name>crud-tarefas</name>
-    <description>CRUD de Lista de Tarefas - Java 8 / Spring Boot</description>
+    <name>crud-banco</name>
+    <description>Cadastro de contas bancárias - Java 8 / Spring Boot</description>
 
     <properties>
         <java.version>1.8</java.version>

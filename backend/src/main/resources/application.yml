@@ -1,6 +1,6 @@
 spring:
   application:
-    name: crud-tarefas
+    name: crud-banco
   datasource:
     url: jdbc:oracle:thin:@//${ORACLE_HOST:localhost}:${ORACLE_PORT:1521}/${ORACLE_SERVICE:XEPDB1}
     username: ${ORACLE_USER:tarefas}

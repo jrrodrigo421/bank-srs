@@ -1,4 +1,4 @@
-package com.entrevista.tarefas.exception;
+package com.entrevista.banco.exception;
 
 public class RecursoNaoEncontradoException extends RuntimeException {
 

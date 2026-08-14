@@ -1,15 +1,44 @@
-# CRUD Lista de Tarefas
+# Bank SRS — cadastro de contas
 
-Projeto simples para preparação de entrevista **Dev Pleno**.
+CRUD simples de **contas bancárias** (agência, número, titular, CPF, tipo, status e saldo) para treino de entrevista **Dev Pleno** em contexto financeiro.
 
+Saldo **não** é editado no cadastro: começa em `0` e muda só com **depósito** e **saque**.
 
-| Camada    | Stack                                                                       |
-| --------- | --------------------------------------------------------------------------- |
-| Backend   | Java 8, Spring Boot 2.7, Oracle, JPA, Swagger (springdoc), testes unitários |
-| Frontend  | Angular 17, HTML, CSS                                                       |
-| Qualidade | SOLID, JaCoCo, SonarQube (`sonar-project.properties`)                       |
-| Infra     | Docker + Docker Compose                                                     |
+| Camada | Stack |
+| ------ | ----- |
+| Backend | Java 8, Spring Boot 2.7, Oracle, JPA, Swagger, testes unitários |
+| Frontend | Angular 17, HTML, CSS |
+| Qualidade | SOLID, JaCoCo, SonarQube |
+| Infra | Docker + Docker Compose |
 
+---
+
+## Cenário (banco)
+
+Uma agência digital mantém contas **corrente** e **poupança**.
+
+| Campo Oracle (`CONTAS`) | Significado |
+| ----------------------- | ----------- |
+| `AGENCIA` + `NUMERO` | Identificação única da conta (constraint unique) |
+| `TITULAR`, `CPF` | Cliente (CPF com 11 dígitos) |
+| `TIPO` | `CORRENTE` ou `POUPANCA` |
+| `STATUS` | `ATIVA`, `BLOQUEADA`, `ENCERRADA` |
+| `SALDO` | `NUMBER(15,2)` — `BigDecimal` no Java |
+| `SEQ_CONTA` | Sequence Oracle do ID |
+
+### Regras de negócio (API)
+
+| Caso | Comportamento |
+| ---- | ------------- |
+| Abrir conta | Saldo inicia em **0**. Recusa agência+número duplicados → **400** |
+| Depositar / sacar | Só conta **ATIVA**. Valor > 0 |
+| Sacar | Recusa se saldo < valor → **400** `Saldo insuficiente` |
+| Conta bloqueada/encerrada | Depósito e saque recusados → **400** |
+| Encerrar (DELETE) | Só com **saldo zero**. Senão → **400** |
+| Conta inexistente | **404** |
+| Validação (CPF, agência, valor) | **400** com mapa de campos |
+
+Saldo usa `BigDecimal` (nunca `double` para dinheiro).
 
 ---
 
@@ -17,100 +46,68 @@ Projeto simples para preparação de entrevista **Dev Pleno**.
 
 ```
 crudJava/
-├── backend/                 # API Spring Boot
-│   ├── src/main/java/...
-│   ├── src/test/java/...    # Testes unitários (Service + Controller)
-│   ├── Dockerfile
-│   ├── pom.xml
-│   └── sonar-project.properties
-├── frontend/                # SPA Angular
-│   ├── src/app/
-│   ├── Dockerfile
-│   └── nginx.conf           # Proxy /api → backend
+├── backend/          # API Spring Boot
+├── frontend/         # SPA Angular (layout agência)
 ├── docker-compose.yml
 ├── README.md
+├── STACKS.md
 └── PERGUNTAS_ENTREVISTA.md
 ```
 
-### Arquitetura do backend (SOLID)
-
-
-| Camada                       | Responsabilidade                      |
-| ---------------------------- | ------------------------------------- |
-| `controller`                 | HTTP / contratos da API               |
-| `service` (interface + impl) | Regras de negócio                     |
-| `repository`                 | Acesso a dados (JPA)                  |
-| `domain`                     | Entidade e enum                       |
-| `dto`                        | Request/Response (não expõe entidade) |
-| `exception`                  | Tratamento centralizado de erros      |
-
-
-Princípios aplicados:
-
-- **S** — cada classe com uma responsabilidade
-- **O** — extensão via interface `TarefaService`
-- **L** — implementação substitui a interface sem quebrar o contrato
-- **I** — interface de serviço focada no domínio de tarefas
-- **D** — controller depende de `TarefaService`, não da implementação
+Camadas SOLID: `controller` → `ContaService` → `ContaRepository` → entidade `Conta` / DTOs.
 
 ---
 
 ## API REST
 
-Base: `http://localhost:8080/api/tarefas`
+Base: `http://localhost:8080/api/contas`
 
+| Método | Endpoint | Descrição |
+| ------ | -------- | --------- |
+| POST | `/api/contas` | Abrir conta |
+| GET | `/api/contas` | Listar (`?status=ATIVA` ou `?tipo=CORRENTE`) |
+| GET | `/api/contas/{id}` | Buscar |
+| PUT | `/api/contas/{id}` | Atualizar cadastro (não mexe no saldo) |
+| DELETE | `/api/contas/{id}` | Encerrar (saldo zero) |
+| POST | `/api/contas/{id}/depositar` | `{ "valor": 100.00 }` |
+| POST | `/api/contas/{id}/sacar` | `{ "valor": 50.00 }` |
 
-| Método | Endpoint            | Descrição                         |
-| ------ | ------------------- | --------------------------------- |
-| POST   | `/api/tarefas`      | Criar                             |
-| GET    | `/api/tarefas`      | Listar (query `?status=PENDENTE`) |
-| GET    | `/api/tarefas/{id}` | Buscar por ID                     |
-| PUT    | `/api/tarefas/{id}` | Atualizar                         |
-| DELETE | `/api/tarefas/{id}` | Excluir                           |
-
-
-Status possíveis: `PENDENTE`, `EM_ANDAMENTO`, `CONCLUIDA`
-
-### Exemplo de body
+### Body de cadastro
 
 ```json
 {
-  "titulo": "Estudar Spring Boot",
-  "descricao": "Revisar CRUD e SOLID",
-  "status": "PENDENTE"
+  "agencia": "0001",
+  "numero": "12345",
+  "titular": "Maria Silva",
+  "cpf": "12345678901",
+  "tipo": "CORRENTE",
+  "status": "ATIVA"
 }
 ```
 
 ### Swagger
 
-- UI: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)  
-- OpenAPI: [http://localhost:8080/api-docs](http://localhost:8080/api-docs)
-
-Com Docker (via Nginx do frontend): [http://localhost:4200/swagger-ui.html](http://localhost:4200/swagger-ui.html)
+- http://localhost:8080/swagger-ui.html
+- OpenAPI: http://localhost:8080/api-docs
+- Via Docker/Nginx: http://localhost:4200/swagger-ui.html
 
 ---
 
-## Subir com Docker (recomendado)
-
-Pré-requisito: Docker Desktop.
+## Subir com Docker
 
 ```bash
 docker compose up --build
 ```
 
-Aguarde o Oracle ficar healthy (pode levar 1–2 minutos na primeira vez).
+Aguarde o Oracle ficar healthy (1–2 min na primeira vez).
 
+| Serviço | URL |
+| ------- | --- |
+| Frontend | http://localhost:4200 |
+| Swagger | http://localhost:8080/swagger-ui.html |
+| Oracle | `localhost:1521` / service `XEPDB1` |
 
-| Serviço           | URL                                                                            |
-| ----------------- | ------------------------------------------------------------------------------ |
-| Frontend          | [http://localhost:4200](http://localhost:4200)                                 |
-| Backend / Swagger | [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html) |
-| Oracle            | `localhost:1521` / service `XEPDB1`                                            |
-
-
-Usuário Oracle da aplicação: `tarefas` / `tarefas`
-
-Parar:
+Usuário Oracle da app: `tarefas` / `tarefas`
 
 ```bash
 docker compose down
@@ -118,67 +115,36 @@ docker compose down
 
 ---
 
-## Rodar local (sem Docker da app)
-
-### Backend
-
-1. Java 8+ e Maven instalados
-2. Oracle acessível (ou use o container só do banco):
+## Local (sem Docker da app)
 
 ```bash
 docker compose up oracle -d
+cd backend && mvn spring-boot:run
+cd frontend && pnpm install && pnpm start
 ```
 
-1. Na pasta `backend`:
-
-```bash
-mvn spring-boot:run
-```
-
-Testes + cobertura JaCoCo:
-
-```bash
-mvn test
-```
-
-Relatório: `backend/target/site/jacoco/index.html`
-
-SonarQube (com servidor Sonar local):
-
-```bash
-mvn sonar:sonar -Dsonar.host.url=http://localhost:9000
-```
-
-### Frontend
-
-```bash
-cd frontend
-pnpm install
-pnpm start
-```
-
-App em [http://localhost:4200](http://localhost:4200) (API em `http://localhost:8080`).
+Testes: `mvn test` (relatório JaCoCo em `backend/target/site/jacoco/index.html`).
 
 ---
 
-## Endpoints rápidos (curl)
+## Curl
 
 ```bash
-# Criar
-curl -X POST http://localhost:8080/api/tarefas \
+# Abrir
+curl -X POST http://localhost:8080/api/contas \
   -H "Content-Type: application/json" \
-  -d "{\"titulo\":\"Estudar Angular\",\"descricao\":\"Componentes\",\"status\":\"PENDENTE\"}"
+  -d "{\"agencia\":\"0001\",\"numero\":\"12345\",\"titular\":\"Maria Silva\",\"cpf\":\"12345678901\",\"tipo\":\"CORRENTE\",\"status\":\"ATIVA\"}"
+
+# Depositar
+curl -X POST http://localhost:8080/api/contas/1/depositar \
+  -H "Content-Type: application/json" \
+  -d "{\"valor\":100.00}"
+
+# Sacar
+curl -X POST http://localhost:8080/api/contas/1/sacar \
+  -H "Content-Type: application/json" \
+  -d "{\"valor\":30.00}"
 
 # Listar
-curl http://localhost:8080/api/tarefas
-
-# Atualizar
-curl -X PUT http://localhost:8080/api/tarefas/1 \
-  -H "Content-Type: application/json" \
-  -d "{\"titulo\":\"Estudar Angular\",\"descricao\":\"OK\",\"status\":\"CONCLUIDA\"}"
-
-# Excluir
-curl -X DELETE http://localhost:8080/api/tarefas/1
+curl http://localhost:8080/api/contas
 ```
-
----

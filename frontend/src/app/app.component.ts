@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Tarefa, StatusTarefa } from './models/tarefa.model';
-import { TarefaService } from './services/tarefa.service';
+import { Conta, StatusConta, TipoConta } from './models/conta.model';
+import { ContaService } from './services/conta.service';
 
 @Component({
   selector: 'app-root',
@@ -13,97 +13,149 @@ import { TarefaService } from './services/tarefa.service';
 })
 export class AppComponent implements OnInit {
 
-  tarefas: Tarefa[] = [];
-  tarefaForm: Tarefa = this.novaTarefa();
+  contas: Conta[] = [];
+  form: Conta = this.novaConta();
   editandoId: number | null = null;
-  filtroStatus: StatusTarefa | '' = '';
+  filtroStatus: StatusConta | '' = '';
+  filtroTipo: TipoConta | '' = '';
   erro = '';
   carregando = false;
 
-  readonly statusOptions: StatusTarefa[] = ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDA'];
+  movimentoId: number | null = null;
+  movimentoTipo: 'depositar' | 'sacar' = 'depositar';
+  movimentoValor: number | null = null;
 
-  constructor(private tarefaService: TarefaService) {}
+  readonly tipos: TipoConta[] = ['CORRENTE', 'POUPANCA'];
+  readonly statusList: StatusConta[] = ['ATIVA', 'BLOQUEADA', 'ENCERRADA'];
+
+  constructor(private contaService: ContaService) {}
 
   ngOnInit(): void {
     this.carregar();
   }
 
+  get totalSaldo(): number {
+    return this.contas.reduce((acc, c) => acc + (c.saldo || 0), 0);
+  }
+
   carregar(): void {
     this.carregando = true;
     this.erro = '';
-    const status = this.filtroStatus || undefined;
-    this.tarefaService.listar(status).subscribe({
+    this.contaService.listar(this.filtroStatus || undefined, this.filtroTipo || undefined).subscribe({
       next: (dados) => {
-        this.tarefas = dados;
+        this.contas = dados;
         this.carregando = false;
       },
       error: () => {
-        this.erro = 'Falha ao carregar tarefas. Verifique se a API está no ar.';
+        this.erro = 'Falha ao carregar contas. Verifique se a API está no ar.';
         this.carregando = false;
       }
     });
   }
 
   salvar(): void {
-    if (!this.tarefaForm.titulo.trim()) {
-      this.erro = 'Título é obrigatório.';
-      return;
-    }
     this.erro = '';
-
     if (this.editandoId != null) {
-      this.tarefaService.atualizar(this.editandoId, this.tarefaForm).subscribe({
+      this.contaService.atualizar(this.editandoId, this.form).subscribe({
         next: () => {
           this.limparForm();
           this.carregar();
         },
-        error: () => this.erro = 'Erro ao atualizar tarefa.'
+        error: (e) => this.erro = this.msg(e, 'Erro ao atualizar conta.')
       });
     } else {
-      this.tarefaService.criar(this.tarefaForm).subscribe({
+      this.contaService.abrir(this.form).subscribe({
         next: () => {
           this.limparForm();
           this.carregar();
         },
-        error: () => this.erro = 'Erro ao criar tarefa.'
+        error: (e) => this.erro = this.msg(e, 'Erro ao abrir conta.')
       });
     }
   }
 
-  editar(tarefa: Tarefa): void {
-    this.editandoId = tarefa.id ?? null;
-    this.tarefaForm = {
-      titulo: tarefa.titulo,
-      descricao: tarefa.descricao || '',
-      status: tarefa.status
+  editar(conta: Conta): void {
+    this.editandoId = conta.id ?? null;
+    this.form = {
+      agencia: conta.agencia,
+      numero: conta.numero,
+      titular: conta.titular,
+      cpf: conta.cpf,
+      tipo: conta.tipo,
+      status: conta.status
     };
   }
 
-  excluir(id: number | undefined): void {
-    if (id == null || !confirm('Excluir esta tarefa?')) {
+  encerrar(id: number | undefined): void {
+    if (id == null || !confirm('Encerrar esta conta? Só é permitido com saldo zero.')) {
       return;
     }
-    this.tarefaService.excluir(id).subscribe({
+    this.contaService.encerrar(id).subscribe({
       next: () => this.carregar(),
-      error: () => this.erro = 'Erro ao excluir tarefa.'
+      error: (e) => this.erro = this.msg(e, 'Erro ao encerrar conta.')
+    });
+  }
+
+  abrirMovimento(conta: Conta, tipo: 'depositar' | 'sacar'): void {
+    this.movimentoId = conta.id ?? null;
+    this.movimentoTipo = tipo;
+    this.movimentoValor = null;
+  }
+
+  confirmarMovimento(): void {
+    if (this.movimentoId == null || !this.movimentoValor) {
+      return;
+    }
+    const op = this.movimentoTipo === 'depositar'
+      ? this.contaService.depositar(this.movimentoId, this.movimentoValor)
+      : this.contaService.sacar(this.movimentoId, this.movimentoValor);
+
+    op.subscribe({
+      next: () => {
+        this.movimentoId = null;
+        this.carregar();
+      },
+      error: (e) => this.erro = this.msg(e, 'Operação recusada.')
     });
   }
 
   limparForm(): void {
     this.editandoId = null;
-    this.tarefaForm = this.novaTarefa();
+    this.form = this.novaConta();
   }
 
-  labelStatus(status: StatusTarefa): string {
-    const map: Record<StatusTarefa, string> = {
-      PENDENTE: 'Pendente',
-      EM_ANDAMENTO: 'Em andamento',
-      CONCLUIDA: 'Concluída'
+  labelTipo(tipo: TipoConta): string {
+    return tipo === 'CORRENTE' ? 'Corrente' : 'Poupança';
+  }
+
+  labelStatus(status: StatusConta): string {
+    const map: Record<StatusConta, string> = {
+      ATIVA: 'Ativa',
+      BLOQUEADA: 'Bloqueada',
+      ENCERRADA: 'Encerrada'
     };
     return map[status];
   }
 
-  private novaTarefa(): Tarefa {
-    return { titulo: '', descricao: '', status: 'PENDENTE' };
+  mascararCpf(cpf: string): string {
+    if (!cpf || cpf.length !== 11) {
+      return cpf;
+    }
+    return `${cpf.slice(0, 3)}.${cpf.slice(3, 6)}.${cpf.slice(6, 9)}-${cpf.slice(9)}`;
+  }
+
+  private novaConta(): Conta {
+    return {
+      agencia: '0001',
+      numero: '',
+      titular: '',
+      cpf: '',
+      tipo: 'CORRENTE',
+      status: 'ATIVA'
+    };
+  }
+
+  private msg(e: { error?: { mensagem?: string } }, fallback: string): string {
+    return e.error && e.error.mensagem ? e.error.mensagem : fallback;
   }
 }

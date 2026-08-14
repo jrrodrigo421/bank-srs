@@ -1,4 +1,4 @@
-package com.entrevista.tarefas.config;
+package com.entrevista.banco.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
@@ -15,8 +15,8 @@ public class AppConfig implements WebMvcConfigurer {
     public OpenAPI openAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("API CRUD de Tarefas")
-                        .description("API REST para gerenciamento de lista de tarefas")
+                        .title("API Contas Bancárias")
+                        .description("Cadastro de contas, depósito e saque — cenário simples de banco")
                         .version("1.0.0")
                         .contact(new Contact().name("Entrevista Dev Pleno")));
     }

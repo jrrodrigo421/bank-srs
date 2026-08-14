@@ -1,66 +1,123 @@
-<div class="container">
-  <header>
-    <h1>Lista de Tarefas</h1>
-    <p>CRUD simples — Angular + Spring Boot</p>
-  </header>
-
-  <section class="card form-card">
-    <h2>{{ editandoId ? 'Editar tarefa' : 'Nova tarefa' }}</h2>
-
-    <div class="campo">
-      <label for="titulo">Título</label>
-      <input id="titulo" type="text" [(ngModel)]="tarefaForm.titulo" maxlength="200" placeholder="Ex: Estudar SOLID" />
-    </div>
-
-    <div class="campo">
-      <label for="descricao">Descrição</label>
-      <textarea id="descricao" [(ngModel)]="tarefaForm.descricao" maxlength="1000" rows="3"
-        placeholder="Detalhes opcionais"></textarea>
-    </div>
-
-    <div class="campo">
-      <label for="status">Status</label>
-      <select id="status" [(ngModel)]="tarefaForm.status">
-        <option *ngFor="let s of statusOptions" [value]="s">{{ labelStatus(s) }}</option>
-      </select>
-    </div>
-
-    <div class="acoes">
-      <button type="button" class="btn primary" (click)="salvar()">
-        {{ editandoId ? 'Atualizar' : 'Criar' }}
-      </button>
-      <button *ngIf="editandoId" type="button" class="btn secondary" (click)="limparForm()">Cancelar</button>
-    </div>
-  </section>
-
-  <section class="card">
-    <div class="lista-header">
-      <h2>Tarefas</h2>
-      <div class="filtro">
-        <label for="filtro">Filtrar:</label>
-        <select id="filtro" [(ngModel)]="filtroStatus" (change)="carregar()">
-          <option value="">Todas</option>
-          <option *ngFor="let s of statusOptions" [value]="s">{{ labelStatus(s) }}</option>
-        </select>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">SB</span>
+      <div>
+        <strong>Bank SRS</strong>
+        <small>Agência digital — contas correntes e poupança</small>
       </div>
     </div>
+    <div class="kpi">
+      <span>Saldo em tela</span>
+      <strong>{{ totalSaldo | currency:'BRL':'symbol':'1.2-2' }}</strong>
+    </div>
+  </header>
 
-    <p *ngIf="erro" class="erro">{{ erro }}</p>
-    <p *ngIf="carregando" class="info">Carregando...</p>
-    <p *ngIf="!carregando && tarefas.length === 0" class="info">Nenhuma tarefa encontrada.</p>
+  <main class="layout">
+    <aside class="panel form-panel">
+      <h2>{{ editandoId ? 'Atualizar cadastro' : 'Abrir conta' }}</h2>
+      <p class="hint">Saldo inicia em R$ 0,00. Depósito e saque são operações à parte.</p>
 
-    <ul class="lista" *ngIf="!carregando && tarefas.length > 0">
-      <li *ngFor="let t of tarefas" [class]="'item status-' + t.status.toLowerCase()">
-        <div class="item-info">
-          <strong>{{ t.titulo }}</strong>
-          <span class="badge">{{ labelStatus(t.status) }}</span>
-          <p *ngIf="t.descricao">{{ t.descricao }}</p>
+      <div class="grid-2">
+        <label>Agência
+          <input [(ngModel)]="form.agencia" maxlength="4" placeholder="0001" />
+        </label>
+        <label>Número
+          <input [(ngModel)]="form.numero" maxlength="10" placeholder="12345" />
+        </label>
+      </div>
+
+      <label>Titular
+        <input [(ngModel)]="form.titular" maxlength="120" placeholder="Nome completo" />
+      </label>
+
+      <label>CPF (11 dígitos)
+        <input [(ngModel)]="form.cpf" maxlength="11" placeholder="Somente números" />
+      </label>
+
+      <div class="grid-2">
+        <label>Tipo
+          <select [(ngModel)]="form.tipo">
+            <option *ngFor="let t of tipos" [value]="t">{{ labelTipo(t) }}</option>
+          </select>
+        </label>
+        <label>Status
+          <select [(ngModel)]="form.status">
+            <option *ngFor="let s of statusList" [value]="s">{{ labelStatus(s) }}</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="acoes">
+        <button type="button" class="btn gold" (click)="salvar()">
+          {{ editandoId ? 'Salvar cadastro' : 'Abrir conta' }}
+        </button>
+        <button *ngIf="editandoId" type="button" class="btn ghost" (click)="limparForm()">Cancelar</button>
+      </div>
+    </aside>
+
+    <section class="panel lista-panel">
+      <div class="lista-header">
+        <h2>Contas</h2>
+        <div class="filtros">
+          <select [(ngModel)]="filtroStatus" (change)="carregar()">
+            <option value="">Todos os status</option>
+            <option *ngFor="let s of statusList" [value]="s">{{ labelStatus(s) }}</option>
+          </select>
+          <select [(ngModel)]="filtroTipo" (change)="carregar()">
+            <option value="">Todos os tipos</option>
+            <option *ngFor="let t of tipos" [value]="t">{{ labelTipo(t) }}</option>
+          </select>
         </div>
-        <div class="item-acoes">
-          <button type="button" class="btn small" (click)="editar(t)">Editar</button>
-          <button type="button" class="btn small danger" (click)="excluir(t.id)">Excluir</button>
+      </div>
+
+      <p *ngIf="erro" class="erro">{{ erro }}</p>
+      <p *ngIf="carregando" class="info">Carregando...</p>
+      <p *ngIf="!carregando && contas.length === 0" class="info">Nenhuma conta encontrada.</p>
+
+      <div class="tabela-wrap" *ngIf="!carregando && contas.length > 0">
+        <table>
+          <thead>
+            <tr>
+              <th>Agência / Conta</th>
+              <th>Titular</th>
+              <th>Tipo</th>
+              <th>Status</th>
+              <th class="dir">Saldo</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of contas">
+              <td>
+                <strong>{{ c.agencia }} / {{ c.numero }}</strong>
+                <small>{{ mascararCpf(c.cpf) }}</small>
+              </td>
+              <td>{{ c.titular }}</td>
+              <td>{{ labelTipo(c.tipo) }}</td>
+              <td><span class="badge" [attr.data-status]="c.status">{{ labelStatus(c.status) }}</span></td>
+              <td class="dir saldo">{{ c.saldo | currency:'BRL':'symbol':'1.2-2' }}</td>
+              <td class="ops">
+                <button type="button" class="link" (click)="abrirMovimento(c, 'depositar')">Depositar</button>
+                <button type="button" class="link" (click)="abrirMovimento(c, 'sacar')">Sacar</button>
+                <button type="button" class="link" (click)="editar(c)">Editar</button>
+                <button type="button" class="link danger" (click)="encerrar(c.id)">Encerrar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="movimento" *ngIf="movimentoId">
+        <h3>{{ movimentoTipo === 'depositar' ? 'Depósito' : 'Saque' }}</h3>
+        <label>Valor (R$)
+          <input type="number" min="0.01" step="0.01" [(ngModel)]="movimentoValor" />
+        </label>
+        <div class="acoes">
+          <button type="button" class="btn gold" (click)="confirmarMovimento()">Confirmar</button>
+          <button type="button" class="btn ghost" (click)="movimentoId = null">Fechar</button>
         </div>
-      </li>
-    </ul>
-  </section>
+      </div>
+    </section>
+  </main>
 </div>
