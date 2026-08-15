@@ -1,6 +1,6 @@
 # Bank SRS — cadastro de contas
 
-CRUD simples de **contas bancárias** (agência, número, titular, CPF, tipo, status e saldo) para treino em contexto financeiro.
+CRUD de **contas bancárias** (agência, número, titular, CPF, tipo, status e saldo) para treino em contexto financeiro.
 
 
 ![1786746049233](image/README/1786746049233.png)

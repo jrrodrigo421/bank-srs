@@ -16,7 +16,7 @@ public class AppConfig implements WebMvcConfigurer {
         return new OpenAPI()
                 .info(new Info()
                         .title("API Contas Bancárias")
-                        .description("Cadastro de contas, depósito e saque — cenário simples de banco")
+                        .description("Cadastro de contas, depósito e saque — cenário: Banco")
                         .version("1.0.0")
                         .contact(new Contact().name("testando bank api")));
     }
