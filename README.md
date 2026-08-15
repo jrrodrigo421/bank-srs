@@ -180,7 +180,7 @@ mvn sonar:sonar "-Dsonar.host.url=http://localhost:9000" "-Dsonar.login=admin" "
 
 Troque `admin123` se a senha do Sonar for outra.
 
-Dashboard: http://localhost:9000/dashboard?id=com.entrevista%3Acrud-banco
+Dashboard: http://localhost:9000/dashboard?id=com.teste%3Acrud-banco
 
 ### Config no projeto
 
@@ -193,7 +193,7 @@ Dashboard: http://localhost:9000/dashboard?id=com.entrevista%3Acrud-banco
 **`backend/sonar-project.properties`**
 
 ```properties
-sonar.projectKey=com.entrevista:crud-banco
+sonar.projectKey=com.teste:crud-banco
 sonar.projectName=crud-banco
 sonar.projectVersion=1.0.0
 sonar.sources=src/main/java
@@ -205,7 +205,7 @@ sonar.sourceEncoding=UTF-8
 sonar.java.source=1.8
 ```
 
-Com `mvn sonar:sonar` a chave efetiva é o GAV Maven: **`com.entrevista:crud-banco`**.
+Com `mvn sonar:sonar` a chave efetiva é o GAV Maven: **`com.teste:crud-banco`**.
 
 ---
 

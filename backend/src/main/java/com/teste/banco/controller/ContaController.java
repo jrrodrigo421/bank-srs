@@ -1,0 +1,121 @@
+package com.teste.banco.controller;
+
+import com.teste.banco.domain.StatusConta;
+import com.teste.banco.domain.TipoConta;
+import com.teste.banco.domain.TipoMovimento;
+import com.teste.banco.dto.ContaRequest;
+import com.teste.banco.dto.ContaResponse;
+import com.teste.banco.dto.FilaMovimentoResponse;
+import com.teste.banco.dto.MovimentoRequest;
+import com.teste.banco.service.ContaService;
+import com.teste.banco.service.FilaService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/contas")
+@Tag(name = "Contas", description = "Cadastro de contas e movimentos (depósito/saque)")
+public class ContaController {
+
+    private final ContaService contaService;
+    private final FilaService filaService;
+
+    public ContaController(ContaService contaService, FilaService filaService) {
+        this.contaService = contaService;
+        this.filaService = filaService;
+    }
+
+    @PostMapping
+    @Operation(summary = "Abrir conta (saldo inicia em 0)")
+    public ResponseEntity<ContaResponse> abrir(@Valid @RequestBody ContaRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(contaService.abrir(request));
+    }
+
+    @GetMapping("/saldo-total")
+    @Operation(summary = "Soma do saldo de todas as contas")
+    public ResponseEntity<java.math.BigDecimal> saldoTotal() {
+        return ResponseEntity.ok(contaService.somarSaldos());
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Buscar conta por ID")
+    public ResponseEntity<ContaResponse> buscarPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(contaService.buscarPorId(id));
+    }
+
+    @GetMapping
+    @Operation(summary = "Listar contas (filtro opcional por status ou tipo)")
+    public ResponseEntity<List<ContaResponse>> listar(
+            @RequestParam(required = false) StatusConta status,
+            @RequestParam(required = false) TipoConta tipo) {
+        return ResponseEntity.ok(contaService.listar(status, tipo));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Atualizar dados cadastrais (não altera saldo)")
+    public ResponseEntity<ContaResponse> atualizar(
+            @PathVariable Long id,
+            @Valid @RequestBody ContaRequest request) {
+        return ResponseEntity.ok(contaService.atualizar(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Encerrar conta (somente saldo zero)")
+    public ResponseEntity<Void> encerrar(@PathVariable Long id) {
+        contaService.encerrar(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/depositar")
+    @Operation(summary = "Depositar (somente conta ATIVA). Header Idempotency-Key evita débito duplicado.")
+    public ResponseEntity<ContaResponse> depositar(
+            @PathVariable Long id,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @Valid @RequestBody MovimentoRequest request) {
+        return ResponseEntity.ok(contaService.depositar(id, request, idempotencyKey));
+    }
+
+    @PostMapping("/{id}/sacar")
+    @Operation(summary = "Sacar (somente conta ATIVA e com saldo). Header Idempotency-Key evita saque duplicado.")
+    public ResponseEntity<ContaResponse> sacar(
+            @PathVariable Long id,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @Valid @RequestBody MovimentoRequest request) {
+        return ResponseEntity.ok(contaService.sacar(id, request, idempotencyKey));
+    }
+
+    @PostMapping("/{id}/depositar-fila")
+    @Operation(summary = "Enfileira depósito (tabela FILA_MOVIMENTO)")
+    public ResponseEntity<FilaMovimentoResponse> depositarFila(
+            @PathVariable Long id,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @Valid @RequestBody MovimentoRequest request) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+                .body(filaService.enfileirar(id, TipoMovimento.DEPOSITO, request, idempotencyKey));
+    }
+
+    @PostMapping("/{id}/sacar-fila")
+    @Operation(summary = "Enfileira saque (tabela FILA_MOVIMENTO)")
+    public ResponseEntity<FilaMovimentoResponse> sacarFila(
+            @PathVariable Long id,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @Valid @RequestBody MovimentoRequest request) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+                .body(filaService.enfileirar(id, TipoMovimento.SAQUE, request, idempotencyKey));
+    }
+}

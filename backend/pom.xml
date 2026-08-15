@@ -11,7 +11,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.entrevista</groupId>
+    <groupId>com.teste</groupId>
     <artifactId>crud-banco</artifactId>
     <version>1.0.0</version>
     <name>crud-banco</name>
