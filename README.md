@@ -207,8 +207,6 @@ sonar.java.source=1.8
 
 Com `mvn sonar:sonar` a chave efetiva é o GAV Maven: **`com.entrevista:crud-banco`**.
 
-Quality Gate **Failed** com Bugs/Smells em A: revise **Security Hotspots** na UI (Safe/Fixed). O scan em si pode ter dado `BUILD SUCCESS` mesmo com o gate vermelho.
-
 ---
 
 ## Curl
