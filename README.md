@@ -29,7 +29,7 @@ Uma agência digital mantém contas **corrente** e **poupança**.
 | `SALDO` | `NUMBER(15,2)` — `BigDecimal` no Java |
 | `SEQ_CONTA` | Sequence Oracle do ID |
 
-Outras tabelas: `IDEMPOTENCIA` (chave única do pedido) e `FILA_MOVIMENTO` (fila de depósito/saque). Detalhe em **[cenarios-banco.md](./cenarios-banco.md)**.
+Outras tabelas: `IDEMPOTENCIA` (chave única do pedido) e `FILA_MOVIMENTO` (fila de depósito/saque).
 
 ### Regras de negócio (API)
 
